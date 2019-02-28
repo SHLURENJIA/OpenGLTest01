@@ -2,6 +2,8 @@ package com.ysh.testopengl;
 
 import android.opengl.Matrix;
 
+import java.util.Stack;
+
 /**
  * 作者：create by @author{ YSH } on 2019/2/21
  * 描述: 存储系统矩阵状态类
@@ -17,10 +19,33 @@ public class MatrixState {
      * 摄像机位置朝向9参数矩阵
      */
     private static float[] mVMatrix = new float[16];
+
+    /**
+     * 当前变换矩阵
+     */
+    private static float[] mCurrMatrix;
     /**
      * 最后起作用的总变换矩阵
      */
     private static float[] mMVPMatrix;
+
+    public static Stack<float[]> mStack = new Stack<float[]>();//保护变换矩阵的栈
+
+    public static void setInitStack()//获取不变换初始矩阵
+    {
+        mCurrMatrix = new float[16];
+        Matrix.setRotateM(mCurrMatrix, 0, 0, 1, 0, 0);
+    }
+
+    public static void pushMatrix()//保护变换矩阵
+    {
+        mStack.push(mCurrMatrix.clone());
+    }
+
+    public static void popMatrix()//恢复变换矩阵
+    {
+        mCurrMatrix = mStack.pop();
+    }
 
     /**
      * 设置摄像机
@@ -83,17 +108,26 @@ public class MatrixState {
         Matrix.orthoM(mProjectMatrix, 0, left, right, bottom, top, near, far);
     }
 
+    public static void translate(float x, float y, float z)//设置沿xyz轴移动
+    {
+        Matrix.translateM(mCurrMatrix, 0, x, y, z);
+    }
+
+    public static void rotate(float angle, float x, float y, float z)//设置绕xyz轴移动
+    {
+        Matrix.rotateM(mCurrMatrix, 0, angle, x, y, z);
+    }
+
     /**
      * 获取具体物体的总变换矩阵
      *
-     * @param spec TODO ??这是什么
      * @return
      */
-    public static float[] getFinalMatrix(float[] spec) {
+    public static float[] getFinalMatrix() {
         mMVPMatrix = new float[16];
-        Matrix.multiplyMM(mMVPMatrix, 0, mVMatrix, 0, spec, 0);
+        Matrix.multiplyMM(mMVPMatrix, 0, mVMatrix, 0, mCurrMatrix, 0);
         Matrix.multiplyMM(mMVPMatrix, 0, mProjectMatrix, 0, mMVPMatrix, 0);
-        return mMVPMatrix;//TODO 第三个参数矩阵是？？
+        return mMVPMatrix;
     }
 
 }

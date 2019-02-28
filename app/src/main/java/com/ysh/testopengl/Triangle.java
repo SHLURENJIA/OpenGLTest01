@@ -13,10 +13,7 @@ import java.nio.FloatBuffer;
  * 修改备注:
  */
 public class Triangle {
-    /**
-     * 具体物体的3D变换矩阵，包括旋转平移缩放
-     */
-    final static float[] mMatrix = new float[16];
+
     private static final int POSITION_COMPONENT_COUNT = 3;
     private static final int COLOR_COMPONENT_COUNT = 4;
     private static final int STRIDE = (POSITION_COMPONENT_COUNT + COLOR_COMPONENT_COUNT) * 4;
@@ -109,16 +106,8 @@ public class Triangle {
     public void drawSelf() {
         //使用某套OpenGL程序
         GLES20.glUseProgram(mProgramId);
-        //初始化变换矩阵
-        Matrix.setRotateM(mMatrix, 0, 0, 0, 1, 0);
-        //设置沿z轴正向移动1
-        Matrix.translateM(mMatrix, 0, 0, 0, 1);
-        //设置绕y轴旋转
-        Matrix.rotateM(mMatrix, 0, yAngle, 0, 1, 0);
-        //设置绕z轴旋转
-        Matrix.rotateM(mMatrix, 0, xAngle, 1, 0, 0);
         //将最终变换矩阵传入OpenGl程序
-        GLES20.glUniformMatrix4fv(mMVPMatrixHandle, 1, false, MatrixState.getFinalMatrix(mMatrix), 0);
+        GLES20.glUniformMatrix4fv(mMVPMatrixHandle, 1, false, MatrixState.getFinalMatrix(), 0);
         //为画笔指定顶点位置数据
         mTriangleBuffer.position(0);
         GLES20.glVertexAttribPointer(mVertexPositionHandle, POSITION_COMPONENT_COUNT, GLES20.GL_FLOAT, false, STRIDE, mTriangleBuffer);

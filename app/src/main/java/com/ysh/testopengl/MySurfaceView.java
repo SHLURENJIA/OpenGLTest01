@@ -49,10 +49,9 @@ public class MySurfaceView extends GLSurfaceView {
             case MotionEvent.ACTION_MOVE:
                 float dy = y - mPreviousY;
                 float dx = x - mPreviousX;
-                for (Triangle triangle : mRenderer.triangles) {
-                    triangle.yAngle += dy * TOUCH_SCALE_FACTOR;//设置绕y轴旋转角度
-                    triangle.xAngle += dx * TOUCH_SCALE_FACTOR;//设置绕x轴旋转角度
-                }
+                mRenderer.yAngle += dy * TOUCH_SCALE_FACTOR;//设置绕y轴旋转角度
+                mRenderer.xAngle += dx * TOUCH_SCALE_FACTOR;//设置绕x轴旋转角度
+                requestRender();
                 break;
         }
         mPreviousX = x;
@@ -62,15 +61,31 @@ public class MySurfaceView extends GLSurfaceView {
 
     private class SceneRenderer implements Renderer {
         Triangle[] triangles = new Triangle[3];
+        float xAngle = 0;
+        float yAngle = 0;
 
         @Override
         public void onDrawFrame(GL10 gl) {
             //清除深度缓冲与颜色缓冲
             GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
             //绘制物体
-            for (Triangle triangle : triangles) {
-                triangle.drawSelf();
-            }
+            //记录初始状态
+            MatrixState.pushMatrix();
+            //设置旋转值
+            MatrixState.rotate(yAngle, 0, 1, 0);
+            MatrixState.rotate(xAngle, 1, 0, 0);
+            //开始绘制
+            triangles[0].drawSelf();
+            //记录旋转后的矩阵
+            MatrixState.pushMatrix();
+            //对第二个三角形进行180度旋转，且往y轴方向平移，让中间的三角形与其他两个三角形相错
+            MatrixState.rotate(180, 0, 0, 1);
+            MatrixState.translate(0, -0.5f, 0);
+            triangles[1].drawSelf();
+            //恢复
+            MatrixState.popMatrix();
+            triangles[2].drawSelf();
+            MatrixState.popMatrix();
         }
 
         @Override
@@ -97,6 +112,10 @@ public class MySurfaceView extends GLSurfaceView {
             }
             //打开深度检测
             GLES20.glEnable(GLES20.GL_DEPTH_TEST);
+            //打开背面剪裁
+            GLES20.glEnable(GLES20.GL_CULL_FACE);
+            //初始化变换矩阵
+            MatrixState.setInitStack();
         }
 
 
